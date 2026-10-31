@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AquaSave</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6F2F5; --surface:#FFFFFF; --ink:#0A2A43; --muted:#4F6B7E; --line:#C9DDE5;
+  --water:#1E88C7; --water-deep:#0F4C75; --warn:#D9822B; --over:#C23B3B; --tank-empty:#F2F8FA;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#07151F; --surface:#0E2434; --ink:#E4F1F7; --muted:#8FAABA; --line:#1E3B50;
+    --water:#3FA9E8; --water-deep:#7CC6F0; --warn:#F0A04B; --over:#EF6B6B; --tank-empty:#0A1C29;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#07151F; --surface:#0E2434; --ink:#E4F1F7; --muted:#8FAABA; --line:#1E3B50;
+  --water:#3FA9E8; --water-deep:#7CC6F0; --warn:#F0A04B; --over:#EF6B6B; --tank-empty:#0A1C29;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:18px}
+h1{font-size:1.6rem;font-weight:800;margin:0;letter-spacing:-.02em}
+header p{margin:0;color:var(--muted);font-size:.95rem}
+.grid{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:16px}
+@media (max-width:720px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.tank-card{display:flex;flex-direction:column;align-items:center;text-align:center}
+svg.tank{width:100%;max-width:210px;height:auto}
+#lvl{transition:y .7s cubic-bezier(.3,.8,.3,1),height .7s cubic-bezier(.3,.8,.3,1)}
+.big{font-size:2.6rem;font-weight:800;letter-spacing:-.03em;line-height:1;margin:10px 0 2px}
+.big.over{color:var(--over)}
+.sub{color:var(--muted);font-size:.95rem;margin:0}
+.budget{margin-top:14px;display:flex;align-items:center;gap:8px;font-size:.95rem;color:var(--muted)}
+input,button{font:inherit;color:inherit}
+input[type=number]{width:84px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--water);outline-offset:2px}
+h2{font-size:1.05rem;margin:0 0 12px;font-weight:600}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.preset{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;transition:border-color .15s,transform .1s}
+.preset:hover{border-color:var(--water)}
+.preset:active{transform:scale(.97)}
+.preset b{display:block;font-weight:600}
+.preset span{color:var(--muted);font-size:.85rem}
+.custom{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.custom input[type=text]{flex:1 1 140px;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.add{background:var(--water-deep);color:#fff;border:0;border-radius:10px;padding:8px 16px;font-weight:600}
+:root[data-theme="dark"] .add{color:#07151F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .add{color:#07151F}}
+.stack{display:flex;flex-direction:column;gap:16px}
+ul{list-style:none;margin:0;padding:0}
+li.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+li.row:last-child{border-bottom:0}
+.row small{color:var(--muted);margin-left:6px}
+.del{background:none;border:0;color:var(--muted);font-size:1.1rem;padding:2px 8px;border-radius:8px}
+.del:hover{color:var(--over)}
+.empty{color:var(--muted);margin:0}
+.week{display:flex;align-items:flex-end;gap:8px;height:120px;position:relative;margin-top:8px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.bar{width:100%;max-width:34px;border-radius:6px 6px 0 0;background:var(--water);min-height:2px}
+.bar.over{background:var(--over)}
+.col span{font-size:.75rem;color:var(--muted);margin-top:4px}
+.tip{background:var(--water-deep);color:#fff;border-radius:18px;padding:16px 18px;font-size:.98rem}
+:root[data-theme="dark"] .tip{color:#07151F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tip{color:#07151F}}
+.tip b{display:block;margin-bottom:2px}
+.reset{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:.85rem;margin-top:12px;padding:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>AquaSave</h1>
+    <p id="today"></p>
+  </header>
+
+  <div class="grid">
+    <section class="card tank-card" aria-live="polite">
+      <svg class="tank" viewBox="0 0 200 250" role="img" aria-label="Water tank showing how much of today’s budget is left">
+        <defs><clipPath id="clip"><rect x="20" y="10" width="160" height="230" rx="26"/></clipPath></defs>
+        <rect x="20" y="10" width="160" height="230" rx="26" fill="var(--tank-empty)"/>
+        <g clip-path="url(#clip)">
+          <rect id="lvl" x="20" y="240" width="160" height="0" fill="var(--water)"/>
+          <rect id="surf" x="20" y="240" width="160" height="4" fill="var(--water-deep)" opacity=".5"/>
+        </g>
+        <rect x="20" y="10" width="160" height="230" rx="26" fill="none" stroke="var(--line)" stroke-width="3"/>
+      </svg>
+      <p class="big" id="left">0 L</p>
+      <p class="sub" id="leftLabel">left today</p>
+      <div class="budget">
+        <label for="budget">Daily budget</label>
+        <input id="budget" type="number" min="10" max="2000" step="10" inputmode="numeric"> L
+      </div>
+    </section>
+
+    <div class="stack">
+      <section class="card">
+        <h2>Log water use</h2>
+        <div class="presets" id="presets"></div>
+        <form class="custom" id="customForm" onsubmit="return false">
+          <input type="text" id="cName" placeholder="Something else" aria-label="Activity name" maxlength="30">
+          <input type="number" id="cL" placeholder="Litres" min="1" max="2000" inputmode="numeric" aria-label="Litres used">
+          <button class="add" id="cAdd" type="button">Add</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Today</h2>
+        <ul id="log"></ul>
+        <p class="empty" id="empty">Nothing logged yet. Tap an activity above when you use water.</p>
+      </section>
+
+      <section class="card">
+        <h2>Last 7 days</h2>
+        <div class="week" id="week"></div>
+        <p class="sub" id="saved" style="margin-top:10px"></p>
+      </section>
+
+      <div class="tip"><b>Saving tip</b><span id="tip"></span></div>
+    </div>
+  </div>
+  <button class="reset" id="reset">Clear all data</button>
+</div>
+
+<script>
+(function(){
+  var KEY="aquasave-v1";
+  var PRESETS=[["Shower (5 min)",50],["Shower (10 min)",100],["Brushing teeth",6],["Washing dishes",20],["Laundry load",50],["Toilet flush",6],["Cooking",10],["Drinking",3]];
+  var TIPS=["Turn the tap off while brushing. It saves about 6 litres each time.","A bucket bath uses roughly half the water of a 10-minute shower.","Fix a dripping tap: one drip per second wastes around 15 litres a day.","Run the washing machine only with a full load.","Reuse rinse water from vegetables to water plants.","Close the tap while soaping your hands.","Water plants early morning or evening, so less evaporates."];
+  var state={budget:135,days:{}};
+
+  function load(){try{var r=localStorage.getItem(KEY);if(r){var s=JSON.parse(r);if(s&&s.days){state=s;}}}catch(e){}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+  function key(d){var y=d.getFullYear(),m=("0"+(d.getMonth()+1)).slice(-2),dd=("0"+d.getDate()).slice(-2);return y+"-"+m+"-"+dd;}
+  function todayKey(){return key(new Date());}
+  function items(k){return state.days[k]||[];}
+  function sum(k){return items(k).reduce(function(a,b){return a+b.l;},0);}
+  function $(id){return document.getElementById(id);}
+
+  function add(name,l){
+    l=Math.round(Number(l));
+    if(!name||!l||l<1)return;
+    var k=todayKey();
+    (state.days[k]=state.days[k]||[]).push({id:Date.now()+Math.random(),name:name,l:l});
+    save();render();
+  }
+  function remove(id){
+    var k=todayKey();
+    state.days[k]=items(k).filter(function(i){return i.id!==id;});
+    save();render();
+  }
+
+  function render(){
+    var used=sum(todayKey()),b=state.budget,left=b-used;
+    var frac=Math.max(0,Math.min(1,left/b)),h=230*frac;
+    $("lvl").setAttribute("y",240-h);$("lvl").setAttribute("height",h);
+    $("surf").setAttribute("y",240-h);$("surf").style.display=h>0?"":"none";
+    var big=$("left");
+    if(left>=0){big.textContent=left+" L";big.className="big";$("leftLabel").textContent="left of "+b+" L today";}
+    else{big.textContent=Math.abs(left)+" L";big.className="big over";$("leftLabel").textContent="over today’s budget";}
+
+    var ul=$("log");ul.innerHTML="";
+    var list=items(todayKey());
+    $("empty").style.display=list.length?"none":"";
+    list.slice().reverse().forEach(function(i){
+      var li=document.createElement("li");li.className="row";
+      var s=document.createElement("span");s.textContent=i.name;
+      var sm=document.createElement("small");sm.textContent=i.l+" L";s.appendChild(sm);
+      var d=document.createElement("button");d.className="del";d.type="button";d.textContent="×";d.setAttribute("aria-label","Remove "+i.name);
+      d.onclick=function(){remove(i.id);};
+      li.appendChild(s);li.appendChild(d);ul.appendChild(li);
+    });
+
+    var wk=$("week");wk.innerHTML="";
+    var vals=[],labels=[],totalSaved=0,now=new Date();
+    for(var n=6;n>=0;n--){
+      var dt=new Date(now.getFullYear(),now.getMonth(),now.getDate()-n),k=key(dt),u=sum(k);
+      vals.push({u:u,has:items(k).length>0});labels.push(dt.toLocaleDateString(undefined,{weekday:"short"}).slice(0,3));
+      if(items(k).length&&u<b)totalSaved+=b-u;
+    }
+    var max=Math.max.apply(null,vals.map(function(v){return v.u;}).concat([b]));
+    vals.forEach(function(v,i){
+      var c=document.createElement("div");c.className="col";
+      var bar=document.createElement("div");bar.className="bar"+(v.u>b?" over":"");
+      bar.style.height=(v.u/max*90)+"%";bar.title=v.u+" L";
+      var sp=document.createElement("span");sp.textContent=labels[i];
+      c.appendChild(bar);c.appendChild(sp);wk.appendChild(c);
+    });
+    $("saved").textContent=totalSaved>0?"You stayed under budget and kept "+totalSaved+" L out of the drain this week.":"Stay under your budget on logged days to see your savings here.";
+  }
+
+  function init(){
+    load();
+    $("today").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"short"});
+    $("budget").value=state.budget;
+    $("budget").addEventListener("change",function(){
+      var v=Math.round(Number(this.value));
+      if(v>=10&&v<=2000){state.budget=v;save();render();}else{this.value=state.budget;}
+    });
+    var p=$("presets");
+    PRESETS.forEach(function(x){
+      var bt=document.createElement("button");bt.type="button";bt.className="preset";
+      bt.innerHTML="<b></b><span></span>";bt.firstChild.textContent=x[0];bt.lastChild.textContent=x[1]+" L";
+      bt.onclick=function(){add(x[0],x[1]);};p.appendChild(bt);
+    });
+    $("cAdd").onclick=function(){
+      var n=$("cName").value.trim()||"Other",l=$("cL").value;
+      if(!l)return;add(n,l);$("cName").value="";$("cL").value="";
+    };
+    $("reset").onclick=function(){
+      if(confirm("Delete all logged water use?")){state={budget:state.budget,days:{}};save();render();}
+    };
+    $("tip").textContent=TIPS[new Date().getDate()%TIPS.length];
+    render();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
